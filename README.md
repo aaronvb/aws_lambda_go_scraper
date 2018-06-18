@@ -25,7 +25,7 @@ Upload the zip file to the AWS Lambda function, and make sure the handler is set
 
 Next, create 3 environment variables: `RECIPIENT` will be the email which receives the notification, `SENDER` which will be the email address that sends the notification, and last `SES_LOCATION` which is the location of your SES(ie: us-west-2).
 
-Finally, make sure the role which the AWS Lambda function is using has permission to Amazon SES. Also, don't forget to add the email address to SES and verify it so it can receives emails.
+Finally, make sure the role which the AWS Lambda function is using has permission to Amazon SES. Also, don't forget to add the email address to SES and verify it so it can receive emails.
 
 ### Running the function
 Create a test event. In the event data pass a JSON hash which has a key `urls` and a string value with the urls you want to scrape, separated by commas, and a key `words`, with a string value of comma separated words you wish to scrape.
@@ -38,3 +38,7 @@ Example:
   "words": "ruby,Hawaii,foobar"
 }
 ```
+
+## Automation
+
+I [wrote an article](https://medium.com/@aaronvb/simple-website-text-scraping-with-go-and-aws-lambda-cd5df25f5b2b) explaining how to setup automated scraping using AWS CloudWatch with AWS Lambda.
