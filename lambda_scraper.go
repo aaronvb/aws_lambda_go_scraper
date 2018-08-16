@@ -14,7 +14,7 @@ import (
 	"golang.org/x/net/html"
 )
 
-func scrape(url string, ch chan string, chFinished chan bool, words []string) {
+func scrape(url string, ch chan FoundWord, chFinished chan bool, words []string) {
 	resp, err := http.Get(url)
 
 	defer func() {
@@ -49,7 +49,7 @@ func scrape(url string, ch chan string, chFinished chan bool, words []string) {
 			for _, word := range words {
 				hasWord := strings.Contains(t.Data, word)
 				if hasWord {
-					ch <- word
+					ch <- FoundWord{word, url}
 				}
 			}
 		}
@@ -144,16 +144,22 @@ func sendEmail(emailSubject string, emailTextBody string) {
 	fmt.Println(result)
 }
 
+// FoundWord represents words found during scraping
+type FoundWord struct {
+	word string
+	url  string
+}
+
 func start(event scrapeData) {
 	urlsToScrape := event.Urls
 	containsWords := event.Words
 
 	urlsToScrapeArray := strings.Split(urlsToScrape, ",")
 	containsWordsArray := strings.Split(containsWords, ",")
-	foundWords := make(map[string][]string)
+	results := make(map[string][]string)
 
 	// Create channels
-	chUrls := make(chan string)
+	chUrls := make(chan FoundWord)
 	chFinished := make(chan bool)
 
 	// Start scrape for urls
@@ -165,14 +171,16 @@ func start(event scrapeData) {
 	for c := 0; c < len(urlsToScrapeArray); {
 		select {
 		case word := <-chUrls:
-			foundWords[urlsToScrapeArray[c]] = append(foundWords[urlsToScrapeArray[c]], word)
+			if contains(results[word.url], word.word) == false {
+				results[word.url] = append(results[word.url], word.word)
+			}
 		case <-chFinished:
 			c++
 		}
 	}
 
 	// Finish, print results
-	for url, words := range foundWords {
+	for url, words := range results {
 		fmt.Println("\nFound", len(words), "words on", url)
 		for _, word := range words {
 			fmt.Println(" - " + word)
@@ -185,6 +193,15 @@ func start(event scrapeData) {
 	}
 
 	close(chUrls)
+}
+
+func contains(s []string, e string) bool {
+	for _, a := range s {
+		if a == e {
+			return true
+		}
+	}
+	return false
 }
 
 type scrapeData struct {
